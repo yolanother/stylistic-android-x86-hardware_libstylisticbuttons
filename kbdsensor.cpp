@@ -319,15 +319,15 @@ static int open_kbd_sensor(const struct hw_module_t *module, const char *id, str
 
 static struct sensor_t sSensorListInit[] = {
 	{
-		"Kbd Orientation Sensor",          // name
-		"Android-x86 Open Source Project", // vendor
-		1,                                 // version
-		ID_ACCELERATION,                   // handle
-		SENSOR_TYPE_ACCELEROMETER,         // type
-		2.8f,                              // maxRange
-		1.0f/4032.0f,                      // resolution
-		3.0f,                              // power
-		{ }                                // reserved
+		name: "Kbd Orientation Sensor",
+		vendor: "Android-x86 Open Source Project",
+		version: 1,
+		handle: ID_ACCELERATION,
+		type: SENSOR_TYPE_ACCELEROMETER,
+		maxRange: 2.8f,
+		resolution: 1.0f/4032.0f,
+		power: 3.0f,
+		reserved: { }
 	}
 };
 
@@ -338,20 +338,20 @@ static int sensors_get_sensors_list(struct sensors_module_t *module, struct sens
 }
 
 static struct hw_module_methods_t sensors_methods = {
-	open_kbd_sensor                     // open
+	open: open_kbd_sensor
 };
 
 struct sensors_module_t HAL_MODULE_INFO_SYM = {
-	{                                   // common
-		HARDWARE_MODULE_TAG,        // tag
-		2,                          // version_major
-		2,                          // version_minor
-		SENSORS_HARDWARE_MODULE_ID, // id
-		"Kbd Orientation Sensor",   // name
-		"Chih-Wei Huang",           // author
-		&sensors_methods,           // methods
-		0,                          // dso
-		{ }                         // reserved
+	common: {
+		tag: HARDWARE_MODULE_TAG,
+		version_major: 2,
+		version_minor: 2,
+		id: SENSORS_HARDWARE_MODULE_ID,
+		name: "Kbd Orientation Sensor",
+		author: "Chih-Wei Huang",
+		methods: &sensors_methods,
+		dso: 0,
+		reserved: { }
 	},
-	sensors_get_sensors_list            // get_sensors_list
+	get_sensors_list: sensors_get_sensors_list
 };
