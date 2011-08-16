@@ -67,6 +67,7 @@ struct SensorPollContext : SensorFd<sensors_poll_device_t> {
 
 	bool enabled;
 	int rotation;
+	struct timespec delay;
 	struct pollfd pfd;
 	sensors_event_t orients[4];
 };
@@ -140,11 +141,14 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 	orients[ROT_90].acceleration.y  = 0.0;
 	orients[ROT_90].acceleration.z  = sin_angle;
 	orients[ROT_180].acceleration.x = 0.0;
-	orients[ROT_180].acceleration.y = +cos_angle;
+	orients[ROT_180].acceleration.y = -cos_angle;
 	orients[ROT_180].acceleration.z = -sin_angle;
 	orients[ROT_270].acceleration.x = -cos_angle;
 	orients[ROT_270].acceleration.y = 0.0;
 	orients[ROT_270].acceleration.z = -sin_angle;
+
+	delay.tv_sec = 0;
+	delay.tv_nsec = 300000000L;
 
 	LOGD("%s: dev=%p ufd=%d fd=%d", __FUNCTION__, this, ufd, fd);
 }
@@ -241,7 +245,9 @@ int SensorPollContext::poll_poll(struct sensors_poll_device_t *dev, sensors_even
 	}
 
 	LOGD("%s: dev=%p ufd=%d fd=%d rotation=%d", __FUNCTION__, dev, ctx->ufd, pfd.fd, ctx->rotation * 90);
+	nanosleep(&ctx->delay, 0);
 	data[0] = ctx->orients[ctx->rotation];
+	data[0].timestamp = time(0) * 1000000000L;
 	return 1;
 }
 
