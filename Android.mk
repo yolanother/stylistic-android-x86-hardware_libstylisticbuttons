@@ -8,10 +8,10 @@ include $(CLEAR_VARS)
 LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_SHARED_LIBRARIES := liblog libcutils
-LOCAL_MODULE := sensors.$(TARGET_PRODUCT)
+LOCAL_MODULE := stylisticbuttons.$(TARGET_PRODUCT)
 LOCAL_MODULE_TAGS := optional
 
-ifeq ($(strip $(BOARD_USES_KBDSENSOR)),true)
+ifeq ($(strip $(BOARD_USES_STYLISTICBUTTONS)),true)
 LOCAL_SRC_FILES := kbdsensor.cpp
 include $(BUILD_SHARED_LIBRARY)
 endif

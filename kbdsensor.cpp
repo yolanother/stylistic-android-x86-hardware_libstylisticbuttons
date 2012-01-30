@@ -84,6 +84,7 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 	const char *dirname = "/dev/input";
 	if (DIR *dir = opendir(dirname)) {
 		while (struct dirent *de = readdir(dir)) {
+            LOGD("Checking device: %s", de->d_name);
 			if (de->d_name[0] != 'e') // eventX
 				continue;
 			char name[PATH_MAX];
@@ -99,8 +100,10 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 				name[0] = '\0';
 			}
 
+            LOGD("Considering opening Name: %s", name);
+
 			// TODO: parse /etc/excluded-input-devices.xml
-			if (!strcmp(name, "AT Translated Set 2 keyboard")) {
+			if (!strcmp(name, "Fujitsu FUJ02BF")) {
 				LOGI("open %s ok", name);
 				break;
 			}
@@ -199,28 +202,30 @@ int SensorPollContext::poll_poll(struct sensors_poll_device_t *dev, sensors_even
 			continue;
 		}
 		LOGD("type=%d scancode=%d value=%d from fd=%d", iev.type, iev.code, iev.value, pfd.fd);
-		if (iev.type == EV_KEY) {
-			int rot = -1;
+        if (iev.type == EV_KEY && iev.value) {
+			int rot = ctx->rotation;
 			switch (iev.code)
 			{
-				case KEY_LEFTCTRL:
-				case KEY_LEFTALT:
-					if (iev.value)
-						continue;
-					rot = ctx->rotation;
-					break;
-				case KEY_UP:
-					rot = ROT_0;
-					break;
-				case KEY_RIGHT:
-					rot = ROT_90;
-					break;
-				case KEY_DOWN:
-					rot = ROT_180;
-					break;
-				case KEY_LEFT:
-					rot = ROT_270;
-					break;
+                case 153:
+                    LOGD("Rotate key pressed...");
+                    LOGD("  Rotation:     %d", ctx->rotation);
+                    LOGD("  ROT_0:        %d", ROT_0); 
+                    LOGD("  ROT_90:       %d", ROT_90); 
+                    LOGD("  ROT_180:      %d", ROT_180); 
+                    LOGD("  ROT_270:      %d", ROT_270); 
+                    /*if(ctx->rotation == ROT_0) {
+                        rot = ROT_270;
+                    } else {
+                        rot = ROT_0;
+                    }*/
+                    rot++;
+                    if(rot > ROT_270) rot = ROT_0;
+                    LOGD("  New Rotation: %d", rot);
+                    break;
+                case 56:
+                    LOGD("Home key pressed...");
+                    iev.code = 125;
+                    break;
 #if 0
 				case KEY_ESC:
 					iev.code = KEY_LEFTMETA;
@@ -259,7 +264,7 @@ static int open_kbd_sensor(const struct hw_module_t *module, const char *id, str
 
 static struct sensor_t sSensorListInit[] = {
 	{
-		name: "Kbd Orientation Sensor",
+		name: "Stylistic Button Sensor",
 		vendor: "Android-x86 Open Source Project",
 		version: 1,
 		handle: ID_ACCELERATION,
@@ -288,8 +293,8 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
 		version_major: 2,
 		version_minor: 3,
 		id: SENSORS_HARDWARE_MODULE_ID,
-		name: "Kbd Orientation Sensor",
-		author: "Chih-Wei Huang",
+		name: "Stylistic Button Sensor",
+		author: "Yolan",
 		methods: &sensors_methods,
 		dso: 0,
 		reserved: { }
