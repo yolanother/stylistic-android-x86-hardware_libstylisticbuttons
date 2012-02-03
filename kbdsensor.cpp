@@ -10,7 +10,7 @@
  *
  **/
 
-#define LOG_TAG "KbdSensor"
+#define LOG_TAG "StylisticButtons"
 
 #include <cmath>
 #include <cerrno>
@@ -24,7 +24,9 @@
 #include <linux/uinput.h>
 #include <hardware/sensors.h>
 
-const int ID_ACCELERATION = (SENSORS_HANDLE_BASE + 0);
+const int ID_ORIENTATION = (SENSORS_HANDLE_BASE + 0);
+#define STYLISTIC_BUTTONS_HARDWARE_MODULE_ID SENSORS_HARDWARE_MODULE_ID
+//#define STYLISTIC_BUTTONS_HARDWARE_MODULE_ID "sensors.stylisticbuttons"
 
 template <typename T> struct SensorFd : T {
 	int ufd;
@@ -80,6 +82,7 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 	setDelay     = poll_setDelay;
 	poll         = poll_poll;
 
+    int eventid = ROT_0;
 	int &fd = pfd.fd;
 	const char *dirname = "/dev/input";
 	if (DIR *dir = opendir(dirname)) {
@@ -112,7 +115,7 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 		closedir(dir);
 	}
 
-	ufd = open("/dev/uinput", O_WRONLY | O_NDELAY);
+	/*ufd = open("/dev/uinput", O_WRONLY | O_NDELAY);
 	if (ufd >= 0) {
 		struct uinput_user_dev ud;
 		memset(&ud, 0, sizeof(ud));
@@ -126,29 +129,38 @@ SensorPollContext::SensorPollContext(const struct hw_module_t *module, struct hw
 		ioctl(ufd, UI_DEV_CREATE, 0);
 	} else {
 		LOGE("could not open uinput device: %s", strerror(errno));
-	}
+	}*/
 
 	pfd.events = POLLIN;
-	orients[ROT_0].version = sizeof(sensors_event_t);
-	orients[ROT_0].sensor = ID_ACCELERATION;
-	orients[ROT_0].type = SENSOR_TYPE_ACCELEROMETER;
-	orients[ROT_0].acceleration.status = SENSOR_STATUS_ACCURACY_HIGH;
-	orients[ROT_270] = orients[ROT_180] = orients[ROT_90] = orients[ROT_0];
-	const double angle = 20.0;
-	const double cos_angle = GRAVITY_EARTH * cos(angle / M_PI);
-	const double sin_angle = GRAVITY_EARTH * sin(angle / M_PI);
-	orients[ROT_0].acceleration.x   = 0.0;
-	orients[ROT_0].acceleration.y   = cos_angle;
-	orients[ROT_0].acceleration.z   = sin_angle;
-	orients[ROT_90].acceleration.x  = cos_angle;
-	orients[ROT_90].acceleration.y  = 0.0;
-	orients[ROT_90].acceleration.z  = sin_angle;
-	orients[ROT_180].acceleration.x = 0.0;
-	orients[ROT_180].acceleration.y = -cos_angle;
-	orients[ROT_180].acceleration.z = -sin_angle;
-	orients[ROT_270].acceleration.x = -cos_angle;
-	orients[ROT_270].acceleration.y = 0.0;
-	orients[ROT_270].acceleration.z = -sin_angle;
+
+    // Initialize the orientation events.
+    LOGD("Initializing: %d degrees.", (90 * eventid));
+    orients[ROT_0].version             = sizeof(sensors_event_t);
+    orients[ROT_0].sensor              = ID_ORIENTATION;
+    orients[ROT_0].type                = SENSOR_TYPE_ACCELEROMETER;
+    orients[ROT_0].orientation.status  = SENSOR_STATUS_ACCURACY_HIGH;
+    orients[ROT_270] = orients[ROT_180] = orients[ROT_90] = orients[ROT_0];
+
+    const double angle = 20.0;
+    const double cos_angle = GRAVITY_EARTH * cos(angle / M_PI);
+    const double sin_angle = GRAVITY_EARTH * sin(angle / M_PI);
+    /*orients[ROT_0].acceleration.x   = 0.0;
+    orients[ROT_0].acceleration.y   = cos_angle;
+    orients[ROT_0].acceleration.z   = sin_angle;
+    orients[ROT_90].acceleration.x  = cos_angle;
+    orients[ROT_90].acceleration.y  = 0.0;
+    orients[ROT_90].acceleration.z  = sin_angle;
+    orients[ROT_180].acceleration.x = 0.0;
+    orients[ROT_180].acceleration.y = -cos_angle;
+    orients[ROT_180].acceleration.z = -sin_angle;
+    orients[ROT_270].acceleration.x = -cos_angle;
+    orients[ROT_270].acceleration.y = 0.0;
+    orients[ROT_270].acceleration.z = -sin_angle;*/
+
+    orients[ROT_0].acceleration.x = 0;
+    orients[ROT_90].acceleration.x = 1;
+    orients[ROT_180].acceleration.x = 2;
+    orients[ROT_270].acceleration.x = 3;
 
 	delay.tv_sec = 0;
 	delay.tv_nsec = 300000000L;
@@ -267,7 +279,7 @@ static struct sensor_t sSensorListInit[] = {
 		name: "Stylistic Button Sensor",
 		vendor: "Android-x86 Open Source Project",
 		version: 1,
-		handle: ID_ACCELERATION,
+		handle: ID_ORIENTATION,
 		type: SENSOR_TYPE_ACCELEROMETER,
 		maxRange: 2.8f,
 		resolution: 1.0f/4032.0f,
@@ -292,7 +304,7 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
 		tag: HARDWARE_MODULE_TAG,
 		version_major: 2,
 		version_minor: 3,
-		id: SENSORS_HARDWARE_MODULE_ID,
+		id: STYLISTIC_BUTTONS_HARDWARE_MODULE_ID,
 		name: "Stylistic Button Sensor",
 		author: "Yolan",
 		methods: &sensors_methods,
